@@ -1,0 +1,6 @@
+# Common dependencies (all platforms)
+gradio>=5.0,<6
+pillow>=10.1
+huggingface_hub>=0.25
+kaggle>=1.6
+pytest>=8

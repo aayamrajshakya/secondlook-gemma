@@ -1,0 +1,5 @@
+# Linux / NVIDIA GPU (or CPU, slowly) inference via Hugging Face transformers
+-r requirements.txt
+torch>=2.4
+transformers>=4.50
+accelerate>=1.0

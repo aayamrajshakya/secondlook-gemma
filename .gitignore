@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Models (multi-GB, never commit)
+models/
+
+# Downloaded demo images (licensed datasets, re-fetch with scripts/fetch_data.py)
+data/images/*
+!data/images/.gitkeep
+data/.prep/
+
+# Local run logs
+runs/
+
+# Secrets
+.env
+kaggle.json
+.DS_Store

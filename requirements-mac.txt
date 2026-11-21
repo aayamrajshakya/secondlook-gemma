@@ -1,0 +1,5 @@
+# Apple Silicon (M1/M2/M3) inference via MLX
+-r requirements.txt
+mlx>=0.22
+mlx-vlm>=0.1.20
+mlx-lm>=0.21
