@@ -1,0 +1,28 @@
+{
+  "id": "er_pneumonia_concordant",
+  "order": 5,
+  "title": "ER: \"Pneumonia\" (control)",
+  "specialty": "Emergency medicine",
+  "summary": "Pneumonia diagnosis that the evidence supports. SecondLook should stay quiet.",
+  "patient": {
+    "age": 45,
+    "sex": "F"
+  },
+  "note_file": "notes/er_pneumonia_concordant.md",
+  "evidence": [
+    {
+      "modality": "chest_xray",
+      "path": "images/er_pneumonia_concordant.png",
+      "source": "NIH ChestX-ray14",
+      "ground_truth": "Pneumonia / consolidation",
+      "expected_keywords": [
+        "consolidation",
+        "pneumonia",
+        "opacit",
+        "infiltrat",
+        "airspace"
+      ]
+    }
+  ],
+  "expected_verdict": "concordant"
+}

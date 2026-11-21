@@ -1,0 +1,29 @@
+{
+  "id": "eye_dm_retinopathy",
+  "order": 3,
+  "title": "Clinic: \"Diabetes doing fine\"",
+  "specialty": "Primary care / ophthalmology",
+  "summary": "Routine diabetes visit, no complications noted. Retinal photo read independently.",
+  "patient": {
+    "age": 58,
+    "sex": "F"
+  },
+  "note_file": "notes/eye_dm_retinopathy.md",
+  "evidence": [
+    {
+      "modality": "fundus",
+      "path": "images/eye_dm_retinopathy.png",
+      "source": "APTOS 2019",
+      "ground_truth": "Proliferative / severe diabetic retinopathy",
+      "expected_keywords": [
+        "retinopathy",
+        "proliferative",
+        "neovascular",
+        "hemorrhage",
+        "haemorrhage",
+        "exudate"
+      ]
+    }
+  ],
+  "expected_verdict": "discordant"
+}

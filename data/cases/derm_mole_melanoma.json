@@ -1,0 +1,25 @@
+{
+  "id": "derm_mole_melanoma",
+  "order": 2,
+  "title": "Clinic: \"Benign mole\"",
+  "specialty": "Dermatology / primary care",
+  "summary": "Changing pigmented lesion reassured as benign. Lesion photo read independently.",
+  "patient": {
+    "age": 55,
+    "sex": "M"
+  },
+  "note_file": "notes/derm_mole_melanoma.md",
+  "evidence": [
+    {
+      "modality": "skin",
+      "path": "images/derm_mole_melanoma.jpg",
+      "source": "HAM10000 (ISIC)",
+      "ground_truth": "Melanoma (histopathology-confirmed)",
+      "expected_keywords": [
+        "melanoma",
+        "malignan"
+      ]
+    }
+  ],
+  "expected_verdict": "discordant"
+}

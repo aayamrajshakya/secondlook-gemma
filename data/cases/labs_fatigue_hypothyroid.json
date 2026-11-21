@@ -1,0 +1,25 @@
+{
+  "id": "labs_fatigue_hypothyroid",
+  "order": 4,
+  "title": "Clinic: \"Depression\"",
+  "specialty": "Primary care",
+  "summary": "Fatigue and low mood treated as depression. Lab report read independently.",
+  "patient": {
+    "age": 42,
+    "sex": "F"
+  },
+  "note_file": "notes/labs_fatigue_hypothyroid.md",
+  "evidence": [
+    {
+      "modality": "lab_report",
+      "path": "cases/assets/lab_report_hypothyroid.png",
+      "source": "Synthetic lab report",
+      "ground_truth": "Primary hypothyroidism (TSH 18.6, low free T4)",
+      "expected_keywords": [
+        "tsh",
+        "hypothyroid"
+      ]
+    }
+  ],
+  "expected_verdict": "discordant"
+}

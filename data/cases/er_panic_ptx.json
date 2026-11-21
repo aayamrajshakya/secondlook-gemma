@@ -1,0 +1,24 @@
+{
+  "id": "er_panic_ptx",
+  "order": 1,
+  "title": "ER: \"Panic attack\"",
+  "specialty": "Emergency medicine",
+  "summary": "Anxiety diagnosis for acute dyspnea. Chest X-ray read independently.",
+  "patient": {
+    "age": 24,
+    "sex": "M"
+  },
+  "note_file": "notes/er_panic_ptx.md",
+  "evidence": [
+    {
+      "modality": "chest_xray",
+      "path": "images/er_panic_ptx.png",
+      "source": "NIH ChestX-ray14",
+      "ground_truth": "Pneumothorax",
+      "expected_keywords": [
+        "pneumothorax"
+      ]
+    }
+  ],
+  "expected_verdict": "discordant"
+}
