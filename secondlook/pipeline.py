@@ -76,6 +76,16 @@ def compose_addendum(recon: Reconciliation | None, med_warnings: list[str]) -> s
     return "\n".join(lines)
 
 
+def transcribe_note(backend: Backend, image_path: str | Path) -> Iterator[str]:
+    """Transcribe a handwritten doctor's note or paper prescription image using MedGemma."""
+    image = prepare_image(image_path)
+    prompt = prompts.handwritten_transcription_prompt()
+    accumulated = ""
+    for chunk in backend.stream_medgemma(prompt, [image], config.MAX_TOKENS_EXTRACT):
+        accumulated += chunk
+        yield accumulated
+
+
 def run(
     backend: Backend,
     note: str,

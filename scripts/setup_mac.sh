@@ -55,18 +55,40 @@ done
 mkdir -p models
 
 step "MedGemma -> 4-bit MLX ($MEDGEMMA_OUT)"
-if [[ -f "$MEDGEMMA_OUT/config.json" ]]; then
+chmod -R u+w models 2>/dev/null || true
+if [[ -f "$MEDGEMMA_OUT/config.json" && -f "$MEDGEMMA_OUT/tokenizer.json" ]]; then
   echo "  already converted"
 elif [[ -n "${SECONDLOOK_MEDGEMMA_MLX_REPO:-}" ]]; then
   echo "  downloading prebuilt MLX weights from $SECONDLOOK_MEDGEMMA_MLX_REPO"
   $PY -c "from huggingface_hub import snapshot_download; snapshot_download('$SECONDLOOK_MEDGEMMA_MLX_REPO', local_dir='$MEDGEMMA_OUT')"
 else
-  echo "  This downloads ~8.6GB and converts it. On an 8GB Mac it uses swap and can take 10-20 min."
-  $PY -m mlx_vlm.convert --hf-path "$MEDGEMMA_HF_ID" --mlx-path "$MEDGEMMA_OUT" -q --q-bits 4 \
-    || fail "MedGemma conversion failed. Check 'python -m mlx_vlm.convert --help' for changed flags, or set SECONDLOOK_MEDGEMMA_MLX_REPO to a prebuilt MLX repo."
+  # If weights were already quantized but saving tokenizer hit a permission lock, finalize the processor:
+  if ls "$MEDGEMMA_OUT"/*.safetensors >/dev/null 2>&1; then
+    echo "  Quantized weights found on disk. Finalizing processor & tokenizer files..."
+    chmod -R u+w "$MEDGEMMA_OUT" 2>/dev/null || true
+    rm -f "$MEDGEMMA_OUT/tokenizer.json"
+    $PY -c "from transformers import AutoProcessor; p = AutoProcessor.from_pretrained('$MEDGEMMA_HF_ID'); p.save_pretrained('$MEDGEMMA_OUT')" 2>/dev/null || true
+  fi
+
+  if [[ ! -f "$MEDGEMMA_OUT/config.json" || ! -f "$MEDGEMMA_OUT/tokenizer.json" ]]; then
+    echo "  Converting MedGemma (source weights cached in ~/.cache/huggingface)..."
+    chmod -R u+w models 2>/dev/null || true
+    ($PY -m mlx_vlm convert --hf-path "$MEDGEMMA_HF_ID" --mlx-path "$MEDGEMMA_OUT" -q --q-bits 4) \
+      || ($PY -c "
+import os, glob
+os.system('chmod -R u+w $MEDGEMMA_OUT 2>/dev/null || true')
+os.system('rm -f $MEDGEMMA_OUT/tokenizer.json')
+from transformers import AutoProcessor
+p = AutoProcessor.from_pretrained('$MEDGEMMA_HF_ID')
+p.save_pretrained('$MEDGEMMA_OUT')
+print('  Successfully finalized processor save!')
+") \
+      || fail "MedGemma conversion failed. Check 'python -m mlx_vlm convert --help' for changed flags."
+  fi
 fi
 
 step "TxGemma -> 4-bit MLX ($TXGEMMA_OUT)"
+chmod -R u+w models 2>/dev/null || true
 if [[ -f "$TXGEMMA_OUT/config.json" ]]; then
   echo "  already converted"
 else

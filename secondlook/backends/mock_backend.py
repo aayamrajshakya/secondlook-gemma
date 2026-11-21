@@ -17,6 +17,16 @@ IMPRESSION:
 1. Mock abnormal finding.
 URGENCY: URGENT"""
 
+_TRANSCRIBE = """EMERGENCY DEPARTMENT NOTE (Decoded from Doctor's Handwritten Chart)
+HPI: 24-year-old male presenting with sudden acute shortness of breath and chest tightness while at desk.
+Exam: HR 108, RR 22, SpO2 95% on room air. Lungs: breath sounds present bilaterally.
+Impression: Acute panic attack with hyperventilation.
+Plan:
+- Lorazepam 0.5 mg PO now
+- Citalopram 10 mg PO daily
+- Ondansetron 4 mg PO PRN nausea
+- Discharge home once symptoms improve."""
+
 _EXTRACT = """WORKING DIAGNOSIS: Mock working diagnosis
 KEY SYMPTOMS: mock symptom one; mock symptom two
 PLANNED MEDICATIONS: citalopram
@@ -41,7 +51,10 @@ class MockBackend(Backend):
         self.delay = delay
 
     def stream_medgemma(self, prompt: str, images: Sequence[Path], max_tokens: int) -> Iterator[str]:
-        if "VERDICT:" in prompt:
+        prompt_lower = prompt.lower()
+        if "handwritten" in prompt_lower or "transcribe" in prompt_lower:
+            text = _TRANSCRIBE
+        elif "VERDICT:" in prompt:
             text = _RECONCILE
         elif "WORKING DIAGNOSIS:" in prompt:
             text = _EXTRACT

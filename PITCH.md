@@ -27,6 +27,7 @@
 - **"How accurate is it?"** Be honest: "We tested several real dataset images per case. curate.py reports the hit rate. It's decision support with a human in the loop, not a diagnosis."
 - **"Why blind the model to the note?"** "If the AI reads the note first it can anchor too. Blinding is how independent double-reading works in radiology."
 - **"Why not one big prompt?"** "Separate stages make each step inspectable, keep the read unanchored, and fit a 4B model's context and attention better."
+- **"Can it handle handwritten doctor notes or paper charts?"** "Yes! MedGemma 1.5 is multimodal: users can snap a photo of a doctor's handwritten chart or prescription pad, MedGemma deciphers the handwriting directly into the note box, and the rest of the second-read and medication safety pipeline runs automatically."
 - **"Is TxGemma a drug-interaction checker?"** "No. It predicts properties like hERG blockade from molecular structure. We layer a simple QT-stacking rule on top and frame it as a pharmacist prompt."
 - **"What's next?"** "EHR integration through FHIR, more modalities (CT slices with MedGemma 1.5), comparing with prior studies over time, and a clinical validation study."
 

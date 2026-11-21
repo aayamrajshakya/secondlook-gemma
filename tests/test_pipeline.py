@@ -1,7 +1,7 @@
 from PIL import Image
 
 from secondlook.backends.mock_backend import MockBackend
-from secondlook.pipeline import run, run_to_completion
+from secondlook.pipeline import run, run_to_completion, transcribe_note
 from secondlook.schema import Evidence, Patient
 
 NOTE = """ED note. 24M with acute dyspnea and chest tightness. Impression: panic attack.
@@ -40,3 +40,12 @@ def test_pipeline_reports_errors(tmp_path):
     ev = [Evidence(modality="chest_xray", path=tmp_path / "missing.png")]
     state = run_to_completion(MockBackend(), NOTE, ev, Patient(24, "M"), save=False)
     assert state.error
+
+
+def test_transcribe_note_with_mock(tmp_path):
+    img_path = _image(tmp_path)
+    chunks = list(transcribe_note(MockBackend(), img_path))
+    assert len(chunks) > 0
+    final = chunks[-1]
+    assert "EMERGENCY DEPARTMENT NOTE" in final
+

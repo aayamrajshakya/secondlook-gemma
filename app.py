@@ -15,7 +15,7 @@ import gradio as gr
 from secondlook import config, prompts, txgemma
 from secondlook.backends import BACKENDS, Backend, get_backend
 from secondlook.cases import load_cases
-from secondlook.pipeline import RunState, run
+from secondlook.pipeline import RunState, run, transcribe_note
 from secondlook.schema import Evidence, Patient
 
 CUSTOM = "Custom case: write your own note and upload evidence"
@@ -219,12 +219,30 @@ def on_case(choice: str):
     return (case.note, case.patient.age, case.patient.sex, image, ev.modality, info, None, "lab_report")
 
 
-def on_run(backend_name, note, age, sex, img1, mod1, img2, mod2, screen_meds):
+def on_transcribe(backend_name: str, img_path: str | None):
+    if not img_path:
+        yield "⚠️ Please upload or select a handwritten note image first.", ""
+        return
+    backend = backend_for(backend_name)
+    yield "⏳ MedGemma 1.5 is deciphering doctor handwriting...", ""
+    accum = ""
+    for chunk in transcribe_note(backend, img_path):
+        accum = chunk
+        yield "⏳ Deciphering...", accum
+    yield "✅ Decoded by MedGemma 1.5", accum
+
+
+def on_sample_handwritten() -> str | None:
+    sample_path = config.DATA_DIR / "cases" / "assets" / "handwritten_rx_note.png"
+    return str(sample_path) if sample_path.exists() else None
+
+
+def on_run(backend_name, note, handwritten_img, age, sex, img1, mod1, img2, mod2, screen_meds):
     patient = Patient(int(age) if age else None, sex)
     evidence = [Evidence(modality=m, path=p) for p, m in ((img1, mod1), (img2, mod2)) if p]
     blinded = [prompts.blinded_read_prompt(ev.modality, patient) for ev in evidence]
 
-    def frame(state, addendum=""):
+    def frame(state, addendum="", updated_note=None):
         return (
             render_steps(state),
             render_verdict(state),
@@ -233,16 +251,23 @@ def on_run(backend_name, note, age, sex, img1, mod1, img2, mod2, screen_meds):
             render_meds(state),
             addendum,
             render_raw(state, blinded),
+            updated_note if updated_note is not None else note,
         )
 
-    if not note.strip() or not evidence:
-        err = RunState(error="Add a clinician note and at least one piece of evidence.")
+    backend = backend_for(backend_name)
+    if not (note or "").strip() and handwritten_img:
+        yield frame(RunState(log=["📸 Deciphering handwritten note image with MedGemma..."]), "", "")
+        for text in transcribe_note(backend, handwritten_img):
+            note = text
+            yield frame(RunState(log=["📸 Deciphering handwritten note image with MedGemma..."]), "", note)
+
+    if not (note or "").strip() or not evidence:
+        err = RunState(error="Add a clinician note (typed or handwritten image) and at least one piece of evidence.")
         yield frame(err)
         return
 
-    backend = backend_for(backend_name)
     for state in run(backend, note, evidence, patient, screen_meds=screen_meds):
-        yield frame(state, state.addendum if state.stage in ("meds", "done") or state.recon else "")
+        yield frame(state, state.addendum if state.stage in ("meds", "done") or state.recon else "", note)
 
 
 # ----------------------------------------------------------------------------- layout
@@ -317,7 +342,13 @@ def build(default_backend: str) -> gr.Blocks:
         with gr.Row(equal_height=False):
             with gr.Column(scale=5):
                 gr.Markdown("### 📝 Clinician note")
-                note = gr.Textbox(lines=18, max_lines=30, show_label=False, placeholder="Paste a clinician note…")
+                with gr.Accordion("📸 Decipher handwritten doctor note / prescription pad (MedGemma)", open=False):
+                    note_img = gr.Image(type="filepath", label="Handwritten Note / Rx Pad", height=200)
+                    with gr.Row():
+                        btn_transcribe = gr.Button("🔍 Decipher Handwriting", variant="secondary", size="sm")
+                        btn_sample = gr.Button("📋 Load Sample Handwritten Rx", variant="secondary", size="sm")
+                    transcribe_status = gr.Markdown()
+                note = gr.Textbox(lines=14, max_lines=30, show_label=False, placeholder="Paste a clinician note or decode from handwritten note above…")
                 with gr.Row():
                     age = gr.Number(label="Age", precision=0)
                     sex = gr.Dropdown(["F", "M"], label="Sex")
@@ -359,10 +390,19 @@ def build(default_backend: str) -> gr.Blocks:
         case.change(on_case, case, case_outputs)
         demo.load(on_case, case, case_outputs)
         backend.change(render_badge, backend, badge)
+        btn_transcribe.click(
+            on_transcribe,
+            [backend, note_img],
+            [transcribe_status, note],
+        )
+        btn_sample.click(
+            on_sample_handwritten,
+            outputs=note_img,
+        )
         go.click(
             on_run,
-            [backend, note, age, sex, img1, mod1, img2, mod2, screen_meds],
-            [steps, verdict, reads, hypothesis, meds, addendum, raw],
+            [backend, note, note_img, age, sex, img1, mod1, img2, mod2, screen_meds],
+            [steps, verdict, reads, hypothesis, meds, addendum, raw, note],
         )
     return demo
 

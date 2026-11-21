@@ -76,6 +76,11 @@ MODALITIES: dict[str, Modality] = {
 URGENCY_LEVELS = ("ROUTINE", "SOON", "URGENT")
 
 
+def handwritten_transcription_prompt() -> str:
+    return """You are an expert medical transcriptionist. Accurately transcribe all clinical notes, doctor's handwriting, abbreviations, symptoms, assessment/diagnosis, and prescription orders from this image.
+Preserve medication names, dosages, and instructions faithfully. Output only the transcribed clinical note text without conversational filler."""
+
+
 def blinded_read_prompt(modality: str, patient: Patient) -> str:
     m = MODALITIES[modality]
     return f"""You are {m.reader} providing an independent second read.

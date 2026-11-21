@@ -31,8 +31,9 @@ fundus / lab report                                ▼
 
 | Step | Model | Sees |
 |---|---|---|
+| 0. Handwritten transcription *(optional)* | MedGemma 1.5 4B (vision) | Handwritten doctor note / prescription pad image |
 | 1. Blinded read | MedGemma 1.5 4B (vision) | Image + age/sex. **Never the note.** |
-| 2. Hypothesis extraction | MedGemma 1.5 4B (text) | The note |
+| 2. Hypothesis extraction | MedGemma 1.5 4B (text) | The note (typed or decoded from handwriting) |
 | 3. Reconciliation | MedGemma 1.5 4B (text) | Note + independent reads |
 | 4. Medication screen | TxGemma 2B predict | Each drug's SMILES string |
 
@@ -48,28 +49,69 @@ fundus / lab report                                ▼
 
 Notes and the lab report are synthetic. Images come from public de-identified datasets.
 
-## Setup (Apple Silicon Mac, do this the night before)
+## 🍎 Apple Silicon Mac Setup (with `uv`)
 
-1. **Accept model terms** on Hugging Face (log in, open each page, accept the Health AI Developer Foundations terms):
-   - https://huggingface.co/google/medgemma-1.5-4b-it
-   - https://huggingface.co/google/txgemma-2b-predict
-2. **Install and convert models** (~9GB download, 10–20 min conversion on an 8GB M1):
+Follow these steps on your MacBook (Apple Silicon M1/M2/M3/M4, 8GB+ RAM):
+
+### 1. Prerequisites (Install `uv`)
+If you don't have `uv` installed yet on your Mac:
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+*(Or via Homebrew: `brew install uv`)*
+
+### 2. Accept Model Terms & Get HF Token
+Both models are gated under Google's Health AI Developer Foundations terms:
+1. Log into Hugging Face and click **"Acknowledge license / Accept terms"** on:
+   - [google/medgemma-1.5-4b-it](https://huggingface.co/google/medgemma-1.5-4b-it)
+   - [google/txgemma-2b-predict](https://huggingface.co/google/txgemma-2b-predict)
+2. Create a Hugging Face **Read Token** at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
+
+### 3. Create Virtualenv & Install Dependencies with `uv`
+```bash
+# Create Python 3.12 environment
+uv venv --python 3.12 .venv
+
+# Install Apple Silicon MLX requirements
+uv pip install --python .venv/bin/python -r requirements-mac.txt
+```
+
+### 4. Authenticate Hugging Face
+```bash
+uv run --python .venv/bin/python huggingface-cli login
+```
+*(Paste your Hugging Face read token when prompted.)*
+
+### 5. Download & Convert Models to 4-bit MLX
+Run the automated Mac setup script (downloads models and converts to 4-bit MLX, ~9GB download, 10–20 min):
+```bash
+bash scripts/setup_mac.sh
+```
+*Note: This script automatically detects `uv` and uses it. It also runs a smoke test on the bundled lab report.*
+
+### 6. Get Demo Data & Assets
+1. **Render synthetic assets** (printed lab report & doctor handwritten prescription pad):
    ```bash
-   bash scripts/setup_mac.sh
+   uv run --python .venv/bin/python scripts/make_lab_report.py
+   uv run --python .venv/bin/python scripts/make_handwritten_note.py
    ```
-   This ends with a smoke test on the bundled lab report. It needs no other data.
-3. **Get demo images** from Kaggle. Put an API token at `~/.kaggle/kaggle.json` (`chmod 600`), and accept the [APTOS 2019 competition rules](https://www.kaggle.com/competitions/aptos2019-blindness-detection/rules):
+2. *(Optional)* **Download Kaggle imaging datasets**:
+   Place your Kaggle API token at `~/.kaggle/kaggle.json` (`chmod 600 ~/.kaggle/kaggle.json`), accept the [APTOS 2019 rules](https://www.kaggle.com/competitions/aptos2019-blindness-detection/rules), and run:
    ```bash
-   .venv/bin/python scripts/fetch_data.py
+   uv run --python .venv/bin/python scripts/fetch_data.py
+   uv run --python .venv/bin/python scripts/curate.py --full
    ```
-4. **Curate**: test every candidate image with MedGemma, promote the ones it reads correctly, run the full pipeline per case, and record outputs for replay:
-   ```bash
-   .venv/bin/python scripts/curate.py --full
-   ```
-5. **Run**:
-   ```bash
-   .venv/bin/python app.py              # http://127.0.0.1:7860
-   ```
+
+### 7. Run SecondLook
+```bash
+# Launch local server (http://127.0.0.1:7860) with live MLX on-device acceleration:
+uv run --python .venv/bin/python app.py
+
+# Or launch with a public phone link to snap photos of notes:
+uv run --python .venv/bin/python app.py --share
+```
+
+---
 
 ### Linux / NVIDIA
 
@@ -115,7 +157,7 @@ tests/                     pytest suite (runs with the mock backend, no weights 
 ## Tests
 
 ```bash
-.venv/bin/python -m pytest -q
+uv run --python .venv/bin/python pytest -q
 ```
 
 ## Limitations (say these out loud if asked)

@@ -1,6 +1,7 @@
 from secondlook.prompts import (
     MODALITIES,
     blinded_read_prompt,
+    handwritten_transcription_prompt,
     parse_blinded_read,
     parse_note_summary,
     parse_reconciliation,
@@ -69,3 +70,10 @@ def test_reconciliation_concordant_defaults_to_info():
 def test_reconciliation_garbage_is_uncertain():
     r = parse_reconciliation("I am not sure what you mean.")
     assert r.verdict == "uncertain"
+
+
+def test_handwritten_transcription_prompt():
+    prompt = handwritten_transcription_prompt()
+    assert "transcribe" in prompt.lower()
+    assert "handwriting" in prompt.lower()
+
