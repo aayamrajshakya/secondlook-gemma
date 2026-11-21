@@ -261,8 +261,16 @@ def on_run(backend_name, note, handwritten_img, age, sex, img1, mod1, img2, mod2
             note = text
             yield frame(RunState(log=["📸 Deciphering handwritten note image with MedGemma..."]), "", note)
 
-    if not (note or "").strip() or not evidence:
-        err = RunState(error="Add a clinician note (typed or handwritten image) and at least one piece of evidence.")
+    if not (note or "").strip() and not evidence:
+        err = RunState(error="Please provide both a clinician note and an evidence image.")
+        yield frame(err)
+        return
+    if not (note or "").strip():
+        err = RunState(error="Clinician note is missing. Type/paste a note or upload a handwritten note image.")
+        yield frame(err)
+        return
+    if not evidence:
+        err = RunState(error="Evidence image is missing. Run 'uv run python scripts/fetch_data.py' or drag-and-drop an image into the Evidence box on the right.")
         yield frame(err)
         return
 
